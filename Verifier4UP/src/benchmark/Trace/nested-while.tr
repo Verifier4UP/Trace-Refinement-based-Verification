@@ -1,0 +1,37 @@
+x := z;
+y := z;
+assume(s != t); -Entry0
+x := f(x);
+z := f(z);
+s := h(s);
+assume(y != z); -Entry1
+y := h(y);
+assume(y != z); -Entry1
+y := h(y);
+assume(y != z); -Entry1
+y := h(y);
+assume(y == z); -Exit1
+assume(s != t); -Entry0
+x := f(x);
+z := f(z);
+s := h(s);
+assume(y != z); -Entry1
+y := h(y);
+assume(y != z); -Entry1
+y := h(y);
+assume(y != z); -Entry1
+y := h(y);
+assume(y == z); -Exit1
+assume(s != t); -Entry0
+x := f(x);
+z := f(z);
+s := h(s);
+assume(y != z); -Entry1
+y := h(y);
+assume(y != z); -Entry1
+y := h(y);
+assume(y != z); -Entry1
+y := h(y);
+assume(y == z); -Exit0
+assume(s == t); -Exit1
+assume(x != y);

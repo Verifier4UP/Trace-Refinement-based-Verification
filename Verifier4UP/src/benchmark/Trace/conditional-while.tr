@@ -1,0 +1,45 @@
+x := y;
+assume(s != t); -Entry
+assume(r1 == r2);
+x := f(x);
+y := f(y);
+r1 := k(r1);
+assume(r1 != r2);
+t := k(t);
+assume(s != t); -Entry
+assume(r1 != r2);
+x := h(x);
+y := h(y);
+r2 := k(r2);
+assume(r1 == r2);
+t := k(t);
+assume(s != t); -Entry
+assume(r1 == r2);
+x := f(x);
+y := f(y);
+r1 := k(r1);
+assume(r1 != r2);
+t := k(t);
+assume(s != t); -Entry
+assume(r1 != r2);
+x := h(x);
+y := h(y);
+r2 := k(r2);
+assume(r1 == r2);
+t := k(t);
+assume(s != t); -Entry
+assume(r1 == r2);
+x := f(x);
+y := f(y);
+r1 := k(r1);
+assume(r1 != r2);
+t := k(t);
+assume(s != t); -Entry
+assume(r1 != r2);
+x := h(x);
+y := h(y);
+r2 := k(r2);
+assume(r1 == r2);
+t := k(t);
+assume(s == t); -Exit
+assume(x != y);

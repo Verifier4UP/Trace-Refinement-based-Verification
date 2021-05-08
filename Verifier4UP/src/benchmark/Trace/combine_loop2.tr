@@ -1,0 +1,15 @@
+x := y;
+assume(x != z); -Entry
+x := f(x);
+y := f(y);
+assume(x != z); -Entry
+x := f(x);
+y := f(y);
+assume(x != w); -Entry
+x := g(x);
+y := g(y);
+assume(x != w); -Entry
+x := g(x);
+y := g(y);
+assume(x == z); -Exit
+assume(x != y);

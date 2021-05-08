@@ -1,0 +1,6 @@
+assume(x == y);
+x := f(x);
+y := f(y);
+x := f(x);
+y := f(y);
+assume(x != y);

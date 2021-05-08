@@ -1,0 +1,18 @@
+x := t;
+y := k;
+assume(t == s);
+assume(y != z); -Entry
+x := f(x);
+y := f(y);
+z := h(z);
+assume(y != z); -Entry
+x := f(x);
+y := f(y);
+z := h(z);
+assume(y != z); -Entry
+x := f(x);
+y := f(y);
+z := h(z);
+assume(y == z); -Exit
+assume(t == k);
+assume(x != y);
