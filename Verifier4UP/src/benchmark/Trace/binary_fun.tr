@@ -1,0 +1,7 @@
+a := c;
+b := d;
+x := f(a, b);
+y := f(c, d);
+x := g(x);
+y := g(y);
+assume(x != y);

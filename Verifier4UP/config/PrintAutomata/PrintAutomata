@@ -1,0 +1,197 @@
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
+
+import javax.naming.Context;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+//import javax.swing.filechooser.FileNameExtensionFilter;
+import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieParser;
+//import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+//import net.sourceforge.czt.java_cup.internal_error;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessor;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.ConstExpander;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.EnsureBoogieModelObserver;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.FunctionInliner;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Simplifier;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.StructExpander;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.TypeChecker;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.UnstructureCode;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.*;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+//import de.uni_freiburg.informatik.ultimate.core.coreplugin.PluginFactory;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainManager;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+//import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainCancel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceBinder;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeUtils;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.Name;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.output.cfgconsoleout.CFGConsoleOutObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker.FilenameExtractionObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker.SyntaxChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataScriptInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataScriptInterpreterObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieTranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieTranslatorObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilderObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopSWBnonRecursive;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.EagerReuseCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IncrementalInclusionCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InvariantChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.LazyReuseCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramDumpController;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstraction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.TraceAbstractionConcurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.TraceAbstractionConcurrentObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.IcfgTransformation;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.IcfgTransformationObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptParser;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.EpsilonNestedwordAutomatonAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+
+//import org.eclipse.cdt.internal.core.build.ToolChainManager;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
+import org.eclipse.equinox.app.IApplication;
+import org.eclipse.equinox.app.IApplicationContext;
+import org.osgi.framework.Bundle;
+import org.apache.commons.lang3.ObjectUtils.Null;
+import org.apache.log4j.Appender;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.PluginConnector;
+
+public class PrintAutomata {
+	
+ 
+	public static void main(String[] args) throws Exception {
+			
+		IUltimateServiceProvider services =  new ToolchainStorage();
+		
+		//解析成抽象语法树
+		BoogieParser parser2 = new BoogieParser();
+		parser2.setServices(services);		
+ 		IElement e1 = parser2.parseAST(new File[] {new File(args[0])});	
+		
+		
+		//转成中间表示
+		
+		BoogiePreprocessor bp = new BoogiePreprocessor();
+		bp.setServices(services);	
+		
+//    	System.out.print("处理之前："+e1.toString()+"\n");	
+    	EnsureBoogieModelObserver EBMO = (EnsureBoogieModelObserver)bp.getObservers().get(0);
+    	TypeChecker typeChecker = (TypeChecker) bp.getObservers().get(1);
+		ConstExpander con = (ConstExpander)bp.getObservers().get(2);
+		StructExpander SE = (StructExpander)bp.getObservers().get(3);
+		UnstructureCode UC = (UnstructureCode)bp.getObservers().get(4);
+		FunctionInliner FI = (FunctionInliner)bp.getObservers().get(5);
+		BoogieSymbolTableConstructor  BSTC = (BoogieSymbolTableConstructor)bp.getObservers().get(6);
+		try {
+			EBMO.process(e1);
+			typeChecker.process(e1);
+			con.process(e1);
+		    SE.process(e1);
+		    UC.process(e1);
+		    FI.process(e1);
+		    BSTC.process(e1);
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	
+//	    System.out.print("处理之后："+e1.toString()+"\n");
+		
+		//转成CFG
+		RCFGBuilder builder = new RCFGBuilder();		
+		builder.setServices(services);
+		RcpPreferenceBinder.registerDefaultPreferences(builder.getPluginID(), builder.getPreferences().getPreferenceItems());			
+		builder.setToolchainStorage((IToolchainStorage)services);			
+
+		
+    	RCFGBuilderObserver rcfgObBuilderObserver = (RCFGBuilderObserver) builder.getObservers().get(0); 		
+		rcfgObBuilderObserver.process(e1);
+		
+////		System.out.print("控制流图："+e1.toString()+"\n");
+		
+		System.out.println("---------------------------------------------");
+		System.out.println(rcfgObBuilderObserver.getRoot()+"\n");    
+		
+		//以自动机的形式输出
+		System.out.println("--------------------------------------------------------");
+		System.out.println(CFG2NestedWordAutomaton.printIcfg(services,rcfgObBuilderObserver.getRoot()));
+		
+		
+	}
+
+	
+	
+ }
+
